@@ -10,8 +10,19 @@ library(RPostgreSQL)
 # Get Data
 pg = dbDriver("PostgreSQL")
 con = dbConnect(pg, user="PG", password="PGAH17", host="data.seia.org", port=5432, dbname="seia")
-capacity = dbGetQuery(con, "select * from products.eia_plus where sheet = 'Capacity - Current Installs'")
+capacity = dbGetQuery(con, "select * from products.eia_plus")
 
+# Transformed the data
+capacity %>% filter(sheet=='Capacity - Current Installs')
+
+ca_table = capacity %>% filter(state_abbr=='CA') %>% group_by(sector, year) %>% summarize(value=sum(value))
+
+# Make the chart
+ca_chart = ggplot(ca_table, aes(x=year, y=value, fill=sector)) + 
+           geom_bar(stat='identity') + 
+           seia_style()
+
+ca_chart
 # Aaron was here
 # Style function
 seia_style <- function() {

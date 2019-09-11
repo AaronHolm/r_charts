@@ -48,3 +48,4 @@ map_attr <- " <a href='https://seia.org'>SEIA</a>"
 leaflet(df) %>%
   addMarkers() %>%
   addTiles(urlTemplate=base_mapbox, attribution=map_attr)
+
