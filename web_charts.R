@@ -2,15 +2,10 @@ library(scales)
 library(janitor)
 library(tidyverse)
 library(ggplot2)
-library(gganimate)
-library(gifski)
+#library(gganimate)
+#library(gifski)
 library(forcats)
 
-db_user="PG"
-db_pass="PGAH17"
-db_host="data.seia.org"
-db_port=5432
-db_name="seia"
 
 # Get Data
 pg = dbDriver("PostgreSQL")
