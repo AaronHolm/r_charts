@@ -29,8 +29,8 @@ basic_choropleth <- leaflet(states) %>%
       addPolygons(fillColor = ~pal(density),
         weight = 2,
         opacity = 1,
-        color = "white",
-        dashArray = "3",
+        color = "#f0f5f8",
+        dashArray = "1",
         fillOpacity = 0.7)
 
 basic_choropleth
