@@ -7,6 +7,10 @@ library(gganimate)
 library(gifski)
 library(forcats)
 library(extrafont)
+library(RPostgreSQL)
+
+pg = dbDriver("PostgreSQL")
+con = dbConnect(pg, user="PG", password="PGAH17", host="data.seia.org", port=5432, dbname="seia")
 
 font_import(prompt=FALSE)
 loadfonts(device = "win")
@@ -74,8 +78,8 @@ seia_style <- function() {
 
 # Grab EIA+
 #eia_plus <- read_csv("C:/tmp/eia_plus.csv", col_types=cols(.default=col_guess(), year=col_character()))
-eia_plus <- read_csv("C:/tmp/eia_plus.csv", col_types=cols(.default=col_character(), value=col_double(), year=col_character()))
-
+#eia_plus <- read_csv("C:/tmp/eia_plus.csv", col_types=cols(.default=col_character(), value=col_double(), year=col_character()))
+eia_plus = dbGetQuery(con, "select * from products.eia_plus")
 #########################
 # Title Slide
 # PPT #1 
@@ -105,6 +109,7 @@ smi_csp <- smi_csp %>%
   summarise(value=sum(value))
 
 itc_data <- merge(smi_us, smi_csp, by=c("sector", "year", "value"), all=TRUE)
+itc_data <- itc_data %>% filter(year != '2010PreCum')
 itc_data
 
 itc_chart <- ggplot(itc_data, aes(x=year, y=value, fill=forcats::fct_rev(factor(sector, levels=c("Residential", "Non-Residential", "Utility PV", "Utility CSP"))))) + 
@@ -121,25 +126,26 @@ itc_chart <- ggplot(itc_data, aes(x=year, y=value, fill=forcats::fct_rev(factor(
              annotate("text", x="2007", y=10000, label="ITC Extended & Expanded", family="Roboto Black", fontface="bold", size=6) + 
              geom_segment(aes(x="2007", y=9500, xend="2008", yend=750), colour='#1f1446', size=1.5,arrow = arrow(length = unit(0.25, "cm"), type="closed")) +  
              annotate("text", x="2010", y=12500, label="ITC Extended", family="Roboto Black", fontface="bold", size=6) + 
-             geom_segment(aes(x="2010", y=12000, xend="2015", yend=8500), colour='#1f1446', size=1.5,arrow = arrow(length = unit(0.25, "cm"), type="closed"))+
-             transition_reveal(as.numeric(year))+
-             ease_aes("linear")
+             geom_segment(aes(x="2010", y=12000, xend="2015", yend=8500), colour='#1f1446', size=1.5,arrow = arrow(length = unit(0.25, "cm"), type="closed")) #+
+             #transition_reveal(as.numeric(year))+
+             #ease_aes("linear")
 
 itc_chart
 
 
 #animate(itc_chart, nframes=750, fps=25, end_pause=50, width=1200, height=900)
-animate(itc_chart, renderer=gifski_renderer(), width=1200, height=600, end_pause=75)
-anim_save("itc_1.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
+animate(itc_chart, renderer=gifski_renderer(), width=1200, height=600, res=75, end_pause=75)
+anim_save("itc_2.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
 
 
-ggsave("C:/tmp/industry trends/itc_growth.png", width=18.72, height=7.2, dpi=300)  
+ggsave("C:/tmp/industry trends/itc_growth_2019Q2.png", width=18.72, height=7.2, dpi=300)  
 
 
 #########################
 # TSF Jobs by Sector
-# PPT #3
-jobs_data <- eia_plus %>% filter(datasource=='TSF 2018')
+# PPT #
+jobs_data <- eia_plus %>% filter(sheet=='TSF Jobs by Sector', data_source=='TSF 2018')
+jobs_data
 cols_to_keep <- c("sector", "year", "value")
 jobs_data <- jobs_data[cols_to_keep]
 
@@ -185,14 +191,18 @@ colnames(TOT2019)[which(names(TOT2019)=="new_mw")] <- "mw"
 fall_cap$sector <- 'Actual'
 TOT2019$sector <- 'Expected'
 fall_cap <- merge(fall_cap, TOT2019, all=TRUE)
-
+fall_cap
 
 fall_prices <- eia_plus %>% filter(sheet == 'Average System Price' & sector == 'Blended')
-fall_prices <- dplyr::filter(fall_prices, grepl('Q4|2019Q1', time_period))
+fall_prices <- dplyr::filter(fall_prices, grepl('Q4|2019Q2', time_period))
 fall_prices <- fall_prices[cols_to_keep]
 colnames(fall_prices)[which(names(fall_prices)=='value')] <- "price"
-
-fall_prices_data <- merge(fall_cap, fall_prices, by="year")
+fall_prices
+fall_cap
+#fall_prices_data <- merge(fall_cap, fall_prices, by="year")
+fall_prices_data <- merge(fall_prices, fall_cap, by="year") %>% distinct()
+#fall_prices_data <- left_join(fall_prices, fall_cap, by="year")
+#fall_prices_data <- rbind(fall_cap, fall_prices)
 fall_prices_data
 fall_chart <- ggplot(fall_prices_data) + 
               #geom_bar(aes(x=factor(year), y=mw, fill=forcats::fct_rev(factor(sector, levels=c("Actual", "Expected"))), alpha=sector), stat="identity", width=.6) + 
@@ -211,11 +221,11 @@ fall_chart <- ggplot(fall_prices_data) +
 
 #animate(fall_chart, nframes=750, fps=25, end_pause=50, width=1200, height=900)
 animate(fall_chart, renderer=gifski_renderer(), end_pause=50, width=1200, height=600)
-anim_save("falling_prices_1.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
+anim_save("falling_prices_2.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
 
 
 fall_chart
-ggsave("C:/tmp/industry trends/falling_price.png", width=18.72, height=7.2, dpi=500)
+ggsave("C:/tmp/industry trends/falling_price2.png", width=18.72, height=7.2, dpi=500)
 
 
 ###############################
@@ -236,6 +246,8 @@ ferc_others$type <- 'Other'
 ferc_others
 
 ferc_chart_data <- merge(ferc_main_types, ferc_others, all=TRUE)
+ferc_chart_data <- ferc_chart_data %>% filter(year != '2010Pre')
+ferc_chart_data
 cols_to_keep <- c("year", "type", "value")
 ferc_chart_data <- ferc_chart_data[cols_to_keep]
 
@@ -258,7 +270,7 @@ ferc_chart <- ggplot(ferc_chart_data) +
               geom_bar(aes(x=year, y=value, fill=forcats::fct_rev(factor(type, levels=c("Solar", "Natural Gas", "Coal", "Wind", "Other")))), position="fill", stat="identity") + 
               geom_text(data=ferc_labels, aes(x=year, y=percent, label=paste(round(percent*100, 0), "%")), position=position_fill(vjust=0.5)) +
               labs(y="Percent of Total Capacity Additions", x="", title="Annual New Electric Capacity Additions") + 
-              scale_x_discrete(labels=c("2019"="2019 Q1"))+
+              scale_x_discrete(labels=c("2019"="2019 Q2"))+
               seia_style() +
               scale_fill_manual(values=c("#ad6eae", "#88b551", "#37b3e5", "#f78237", "#ffe14f")) +
               guides(fill=guide_legend(reverse=TRUE)) + 
@@ -321,7 +333,8 @@ utility_chart
 ##############################
 # Resi Market - CA, Next 9 States, then Rest
 # PPT #10
-resi_data <- eia_plus %>% filter(sector=="Residential" & sheet=="Capacity - Current Installs")
+resi_data <- eia_plus %>% filter(sector=="Residential" & sheet=="Capacity - Current Installs" & year != '2010Pre')
+resi_data
 
 # Get Top 10
 resi_ranks <- resi_data %>%
@@ -337,9 +350,10 @@ first_data <- resi_data %>%
               group_by(state_full, year) %>%
               summarise(value=sum(value))
 first_data$group <- first_state_name
+first_data
 
 next_9_states <- resi_ranks %>% filter(ranks > 1 & ranks <= 10)
-next_9_names <- next_9_ranks$state_full
+next_9_names <- next_9_states$state_full
 next_9_data <- resi_data %>%
                filter(state_full %in% c(next_9_names)) %>%
                group_by(year) %>%
@@ -363,6 +377,7 @@ chart_data <- chart_data %>% filter(year!='2010PreCumulative')
 resi_chart <- ggplot(chart_data) + 
               geom_bar(aes(x=year, y=value, fill=forcats::fct_rev(group)), width=.75, stat="identity") + 
               seia_style() + 
+              labs(y="Capacity (MW)", x="", title="Residential Solar PV Installations") + 
               scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + 
               scale_y_continuous(expand=expand_scale(mult=c(0,0.02))) +
               guides(fill=guide_legend(reverse=TRUE))
@@ -431,12 +446,12 @@ smi_us <- smi_histfcast %>%
 
 growth_chart <- ggplot(smi_us, aes(x=factor(time_period), y=value, fill=forcats::fct_rev(factor(sector, levels=c("Residential", "Non-Residential", "Utility"))))) + 
                 geom_bar(stat='identity', width=0.5) + 
-                labs(y="Capacity (MW)", x="", title="Annual U.S. Solar Installations", caption="Source: SEIA/Wood Mackenzie - Solar Market Insight") + 
+                labs(y="Capacity (MW)", x="", title="US Solar PV Deployment Forecast", caption="Source: SEIA/Wood Mackenzie - Solar Market Insight") + 
                 seia_style() + 
                 scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + 
                 scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + 
-                guides(fill=guide_legend(reverse=TRUE))+
-                transition_reveal(as.numeric(time_period))
+                guides(fill=guide_legend(reverse=TRUE)) #+
+                #transition_reveal(as.numeric(time_period))
 #+
 #                transition_reveal(as.numeric(time_period))
 
@@ -451,3 +466,4 @@ anim_save("forecast_2.gif", animation = last_animation(), path = "C:/tmp/industr
 
 
 ggsave("C:/tmp/industry trends/growth_chart.png", width=18.72, height=7.2, dpi=100)
+

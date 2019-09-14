@@ -8,7 +8,7 @@ library(forcats)
 
 library(RPostgreSQL)
 pg = dbDriver("PostgreSQL")
-con = dbConnect(pg, user="PG", password="PGAH17", host="data.seia.org", port=5432, dbname="seia")
+con = dbConnect(pg, user=db_user, password=db_pass, host=db_host, port=db_port, dbname=db_name)
 
 
 seia_style <- function() {
@@ -75,7 +75,14 @@ smi_noncsp_annual <- read_csv("C:/tmp/smi_noncsp.csv")
 noncsp_states <- unique(smi_noncsp_annual$state_full)
 for(state in noncsp_states){
   state_annual <- smi_noncsp_annual %>% filter(state_full==state)
-  state_chart <- ggplot(state_annual, aes(x=factor(year), y=value, fill=forcats::fct_rev(factor(sector, levels=c("Residential", "Non-Residential", "Utility"))))) + geom_bar(stat='identity', width=0.5) + labs(y="Capacity (MW)", x="", title=paste(state,"Annual Solar Installations")) + seia_style() + scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + scale_x_discrete(labels=c("2019"="2019 Q1")) + guides(fill=guide_legend(reverse=TRUE))
+  state_chart <- ggplot(state_annual, aes(x=factor(year), y=value, fill=forcats::fct_rev(factor(sector, levels=c("Residential", "Non-Residential", "Utility"))))) + 
+                 geom_bar(stat='identity', width=0.5) + 
+                 labs(y="Capacity (MW)", x="", title=paste(state,"Annual Solar Installations")) + 
+                 seia_style() + 
+                 scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + 
+                 scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + 
+                 scale_x_discrete(labels=c("2019"="2019 Q2")) + 
+                 guides(fill=guide_legend(reverse=TRUE))
   ggsave(paste("C:/tmp/factsheets/charts/web/",state,".png", sep=""), width=18.72, height=7.2, dpi=100)
 }
 
