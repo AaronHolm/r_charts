@@ -114,7 +114,7 @@ itc_data
 
 itc_chart <- ggplot(itc_data, aes(x=year, y=value, fill=forcats::fct_rev(factor(sector, levels=c("Residential", "Non-Residential", "Utility PV", "Utility CSP"))))) + 
              geom_bar(stat='identity', width=0.5) + 
-             labs(y="Capacity (MW)", x="", title="Annual U.S. Solar Installations", caption="Source: SMI") + 
+             labs(y="Capacity (MWdc)", x="", title="Annual U.S. Solar Installations", caption="Source: SMI") + 
              seia_style() + 
              scale_fill_manual(values=c("#88b551", "#37b3e5", "#ffe14f", "#2f70af")) + 
              scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + 
@@ -211,17 +211,20 @@ fall_chart <- ggplot(fall_prices_data) +
               geom_smooth(aes(x=factor(year), y=price*2814, group=1), stat="identity", color="#ffe14f", size=1.5) + 
               scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), name="Capacity (MWdc)", label=comma, sec.axis = sec_axis(~./2814, labels=function(price) paste0("$",price,".00"), name="Blended Average PV System Price ($/Watt)")) + 
               scale_fill_manual(values=c(alpha("#2f70af", 0.25), "#2f70af"), labels=c("Expected", "Actual")) +
+              scale_x_discrete(labels=c("2019"="Q2 2019"))+
               seia_style() +  
               scale_alpha_manual(values = c("Actual"=1, "Expected"=0.25), guide=FALSE) + 
               #scale_alpha_manual(values = c("Actual"=1, "Expected"=0.25)) + 
               labs(title='U.S. Solar PV Price Declines and Deployment Growth') +
-              guides(fill=guide_legend(reverse=TRUE)) + 
+              guides(fill=guide_legend(reverse=TRUE)) +
+              theme(axis.title.y.right = element_text(margin = margin(t = 0, r = 0, b = 0, l = 20)))
               #guides(fill=FALSE)+
-              transition_reveal(as.numeric(year))
+              #transition_reveal(as.numeric(year))
 
 #animate(fall_chart, nframes=750, fps=25, end_pause=50, width=1200, height=900)
-animate(fall_chart, renderer=gifski_renderer(), end_pause=50, width=1200, height=600)
-anim_save("falling_prices_2.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
+
+#animate(fall_chart, renderer=gifski_renderer(), end_pause=50, width=1200, height=600)
+#anim_save("falling_prices_2.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
 
 
 fall_chart
@@ -267,10 +270,10 @@ ferc_labels <- ferc_chart_data %>%
 
 
 ferc_chart <- ggplot(ferc_chart_data) + 
-              geom_bar(aes(x=year, y=value, fill=forcats::fct_rev(factor(type, levels=c("Solar", "Natural Gas", "Coal", "Wind", "Other")))), position="fill", stat="identity") + 
+              geom_bar(aes(x=year, y=value, fill=forcats::fct_rev(factor(type, levels=c("Solar", "Natural Gas", "Coal", "Wind", "Other")))), position="fill", stat="identity", width=0.75) + 
               geom_text(data=ferc_labels, aes(x=year, y=percent, label=paste(round(percent*100, 0), "%")), position=position_fill(vjust=0.5)) +
               labs(y="Percent of Total Capacity Additions", x="", title="Annual New Electric Capacity Additions") + 
-              scale_x_discrete(labels=c("2019"="2019 Q2"))+
+              scale_x_discrete(labels=c("2019"="Q2 2019"))+
               seia_style() +
               scale_fill_manual(values=c("#ad6eae", "#88b551", "#37b3e5", "#f78237", "#ffe14f")) +
               guides(fill=guide_legend(reverse=TRUE)) + 
@@ -377,10 +380,12 @@ chart_data <- chart_data %>% filter(year!='2010PreCumulative')
 resi_chart <- ggplot(chart_data) + 
               geom_bar(aes(x=year, y=value, fill=forcats::fct_rev(group)), width=.75, stat="identity") + 
               seia_style() + 
-              labs(y="Capacity (MW)", x="", title="Residential Solar PV Installations") + 
+              labs(y="Capacity (MWdc)", x="", title="Residential Solar PV Installations") + 
               scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + 
               scale_y_continuous(expand=expand_scale(mult=c(0,0.02))) +
-              guides(fill=guide_legend(reverse=TRUE))
+              guides(fill=guide_legend(reverse=TRUE))+
+              scale_x_discrete(labels=c("2019"="Q2 2019"))
+
 resi_chart
 ggsave("C:/tmp/industry trends/resi_state_comparison.png", width=18.72, height=7.2, dpi=300)
 
@@ -418,14 +423,16 @@ colnames(cs_data) <- c("year", "value", "sector")
 
 # Merge CS and NR-CS frames into final dataframe
 chart_data <- merge(nr_data, cs_data, all=TRUE)
+chart_data
 # Create the chart
 nonresi_chart <- ggplot(chart_data, aes(x=factor(year), y=value, fill=forcats::fct_rev(factor(sector, levels=c("C&I, Non-Profit, Gov't", "Community Solar"))))) + 
                  geom_bar(stat='identity', width=0.5) + 
-                 labs(y="Capacity (MW)", x="", title="Non-Residential Solar PV Installations") + 
+                 labs(y="Capacity (MWdc)", x="", title="Non-Residential Solar PV Installations") + 
                  seia_style() + 
                  scale_fill_manual(values=c("#ffe14f", "#2f70af")) + 
                  scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + 
-                 guides(fill=guide_legend(reverse=TRUE))
+                 guides(fill=guide_legend(reverse=TRUE))+
+                 scale_x_discrete(labels=c("2019"="Q2 2019"))
 
 nonresi_chart
 # Save the chart
@@ -446,12 +453,12 @@ smi_us <- smi_histfcast %>%
 
 growth_chart <- ggplot(smi_us, aes(x=factor(time_period), y=value, fill=forcats::fct_rev(factor(sector, levels=c("Residential", "Non-Residential", "Utility"))))) + 
                 geom_bar(stat='identity', width=0.5) + 
-                labs(y="Capacity (MW)", x="", title="US Solar PV Deployment Forecast", caption="Source: SEIA/Wood Mackenzie - Solar Market Insight") + 
+                labs(y="Capacity (MWdc)", x="", title="US Solar PV Deployment Forecast", caption="Source: SEIA/Wood Mackenzie - Solar Market Insight") + 
                 seia_style() + 
                 scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + 
                 scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + 
-                guides(fill=guide_legend(reverse=TRUE)) #+
-                #transition_reveal(as.numeric(time_period))
+                guides(fill=guide_legend(reverse=TRUE)) +
+                transition_reveal(as.numeric(time_period))
 #+
 #                transition_reveal(as.numeric(time_period))
 
@@ -460,7 +467,7 @@ growth_chart
 
 #animate(growth_chart, nframes=750, fps=25, end_pause=50, width=1200, height=900)
 #animate(growth_chart, nframes=750, end_pause=50, options(ani.width=1200, ani.height=900))
-animate(growth_chart, renderer=gifski_renderer(), end_pause=50, width=1200, height=600)
+animate(growth_chart, renderer=gifski_renderer(), end_pause=50, width=1872, height=720)
 
 anim_save("forecast_2.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
 

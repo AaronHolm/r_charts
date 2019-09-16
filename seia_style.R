@@ -37,9 +37,7 @@ seia_style <- function() {
     #This sets the text font, size and colour for the axis test, as well as setting the margins and removes lines and ticks. In some cases, axis lines and axis ticks are things we would want to have in the chart - the cookbook shows examples of how to do so.
     axis.title.y = ggplot2::element_text(family=font, size=20, color="#1f1446", face="bold", margin=margin(0,10, 0, 0)), 
     axis.title.x = ggplot2::element_blank(), 
-    axis.text = ggplot2::element_text(family=font,
-                                                                                                                                                                                                    size=18,
-                                                                                                                                                                                                    color="#1f1446",                                                                                                                                                                                                 face="bold"),
+    axis.text = ggplot2::element_text(family=font, size=18, color="#1f1446", face="bold"),
     axis.text.x = ggplot2::element_text(angle=0, hjust=.5),
     axis.ticks = ggplot2::element_blank(),
     axis.line = ggplot2::element_blank(),

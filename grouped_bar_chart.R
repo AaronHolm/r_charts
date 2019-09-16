@@ -66,7 +66,8 @@ for (state in states){
     #scale_y_continuous(breaks=seq(250000, 500000, by=50000), limits=c(200000, 575000), label=comma)
     #scale_y_continuous(breaks=seq(scale_min, scale_max, by=scale_level), expand=expand_scale(mult=c(0,0.02)), label=comma)  
   #guides(fill=guide_legend(reverse=TRUE))
-  ggsave(paste("C:/tmp/ITC/charts/jobs/", state, '_ylim.png', sep=""), width=18, height=7, dpi=300)
+  #ggsave(paste("C:/tmp/ITC/charts/jobs/", state, '_ylim.png', sep=""), width=18, height=7, dpi=300)
+  ggsave(paste("C:/tmp/ITC/charts/", state, '_hi-res.png', sep=""), width=18, height=7, dpi=1000)
   #ggsave(paste("C:/tmp/ITC/charts/deployment/", state, '.png', sep=""), width=18, height=7, dpi=300)
   
 }
