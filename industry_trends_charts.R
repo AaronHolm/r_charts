@@ -204,27 +204,31 @@ fall_prices_data <- merge(fall_prices, fall_cap, by="year") %>% distinct()
 #fall_prices_data <- left_join(fall_prices, fall_cap, by="year")
 #fall_prices_data <- rbind(fall_cap, fall_prices)
 fall_prices_data
+fall_prices_data$newsector <- ifelse(fall_prices_data$sector == 'Actual', 'Through Q2 2019', ifelse(fall_prices_data$sector == 'Expected', 'Forecast', 'Error'))
+fall_prices_data
 fall_chart <- ggplot(fall_prices_data) + 
               #geom_bar(aes(x=factor(year), y=mw, fill=forcats::fct_rev(factor(sector, levels=c("Actual", "Expected"))), alpha=sector), stat="identity", width=.6) + 
-              geom_bar(aes(x=factor(year), y=mw, fill=forcats::fct_rev(factor(sector, levels=c("Actual", "Expected")))), stat="identity", width=.6) + 
+              geom_bar(aes(x=factor(year), y=mw, fill=forcats::fct_rev(factor(newsector, levels=c("Through Q2 2019", "Forecast")))), stat="identity", width=.6) + 
               #geom_line(aes(x=factor(year), y=price*2814, group=1), stat="identity", color="#ffe14f", size=1.5) + 
               geom_smooth(aes(x=factor(year), y=price*2814, group=1), stat="identity", color="#ffe14f", size=1.5) + 
               scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), name="Capacity (MWdc)", label=comma, sec.axis = sec_axis(~./2814, labels=function(price) paste0("$",price,".00"), name="Blended Average PV System Price ($/Watt)")) + 
-              scale_fill_manual(values=c(alpha("#2f70af", 0.25), "#2f70af"), labels=c("Expected", "Actual")) +
+              #scale_fill_manual(values=c(alpha("#2f70af", 0.25), "#2f70af"), labels=c("Expected", "Actual")) +
+              scale_fill_manual(values=c(alpha("#2f70af", 0.25), "#2f70af"), labels=c("Forecast", "Through Q2 2019")) +
               scale_x_discrete(labels=c("2019"="Q2 2019"))+
               seia_style() +  
-              scale_alpha_manual(values = c("Actual"=1, "Expected"=0.25), guide=FALSE) + 
+              #scale_alpha_manual(values = c("Actual"=1, "Expected"=0.25), guide=FALSE) + 
+              scale_alpha_manual(values = c("Through Q2 2019"=1, "Forecast"=0.25), guide=FALSE) + 
               #scale_alpha_manual(values = c("Actual"=1, "Expected"=0.25)) + 
               labs(title='U.S. Solar PV Price Declines and Deployment Growth') +
               guides(fill=guide_legend(reverse=TRUE)) +
-              theme(axis.title.y.right = element_text(margin = margin(t = 0, r = 0, b = 0, l = 20)))
+              theme(axis.title.y.right = element_text(margin = margin(t = 0, r = 0, b = 0, l = 20)))+
               #guides(fill=FALSE)+
-              #transition_reveal(as.numeric(year))
+              transition_reveal(as.numeric(year))
 
-#animate(fall_chart, nframes=750, fps=25, end_pause=50, width=1200, height=900)
-
-#animate(fall_chart, renderer=gifski_renderer(), end_pause=50, width=1200, height=600)
-#anim_save("falling_prices_2.gif", animation = last_animation(), path = "C:/tmp/industry trends/")  
+#animate(fall_chart, nframes=750, fps=25, end_pause=50, width=1872, height=720)
+animate(fall_chart, fps=60, end_pause=50, width=1872, height=720)
+#animate(fall_chart, renderer=gifski_renderer(), end_pause=50, width=18.72, height=720)
+anim_save("falling_prices_4.gif", animation = last_animation(), path = "C:/tmp/industry trends/")
 
 
 fall_chart
@@ -458,6 +462,7 @@ growth_chart <- ggplot(smi_us, aes(x=factor(time_period), y=value, fill=forcats:
                 scale_fill_manual(values=c("#37b3e5", "#ffe14f", "#2f70af")) + 
                 scale_y_continuous(expand=expand_scale(mult=c(0,0.02)), label=comma) + 
                 guides(fill=guide_legend(reverse=TRUE)) +
+                scale_x_discrete(labels=c("2019"="2019E", "2020"="2020E", "2021"="2021E", "2022"="2022E", "2023"="2023E", "2024"="2024E"))+
                 transition_reveal(as.numeric(time_period))
 #+
 #                transition_reveal(as.numeric(time_period))
